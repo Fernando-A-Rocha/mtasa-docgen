@@ -9,12 +9,12 @@ on:
   workflow_dispatch:  # Manual trigger from GitHub UI
 jobs:
   # Build job
-  generate_html:
+  build:
     runs-on: ubuntu-latest  # Use the latest Ubuntu runner
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -30,11 +30,17 @@ jobs:
         run: |
           python docgen.py
 
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{steps.deployment.outputs.page_url}}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Deploy to GitHub Pages
-        if: success()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          publish_dir: ./output/html
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          user_name: 'github-actions'
-          user_email: 'github-actions@users.noreply.github.com'
+        id: deployment
+        uses: actions/deploy-pages@v2
